@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Governance} from "./Governance.sol";
 import {GovernanceToken} from "./GovernanceToken.sol";
 import {TreasuryVault} from "./TreasuryVault.sol";
-import {LPToken} from "./LPTOken.sol";
+import {LPToken} from "./LPToken.sol";
 
 /**
  * @title OmniYieldPortal
