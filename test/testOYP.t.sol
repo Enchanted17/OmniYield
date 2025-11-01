@@ -19,7 +19,6 @@ contract TestOmniYieldPortal is Test {
     FlashLoan FL;
     GovernanceProxy govProxy;
 
-
     address user1 = makeAddr("user1");
     address user2 = makeAddr("user2");
     address user3 = makeAddr("user3");

@@ -8,7 +8,8 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
  * @dev Handles proposal creation, voting, and execution for protocol governance
  * Manages strategy whitelisting and community decision making
  */
-contract GovernanceV1 is UUPSUpgradeable, Initializable{
+
+contract GovernanceV1 is UUPSUpgradeable, Initializable {
     // ========== STATE VARIABLES ==========
     address owner;
     uint256 public proposalId;
@@ -16,7 +17,6 @@ contract GovernanceV1 is UUPSUpgradeable, Initializable{
 
     // Strategy management
     address[] public strategies;
-    mapping(address => bool) public isStrategy;
 
     // Proposal state tracking
     enum ProposalState {
@@ -45,6 +45,7 @@ contract GovernanceV1 is UUPSUpgradeable, Initializable{
         bool executed;
     }
 
+    mapping(address => bool) public isStrategy;
     mapping(uint256 => Proposal) public idToProposal;
     mapping(address => mapping(uint256 => bool)) public hasUserVoted;
 
@@ -70,9 +71,7 @@ contract GovernanceV1 is UUPSUpgradeable, Initializable{
     );
 
     event ProposalStateUpdated(uint256 indexed proposalId, ProposalState oldState, ProposalState newState);
-
     event ProposalExecuted(uint256 indexed proposalId, address strategy, Action action, bool success);
-
     event StrategyAdded(address indexed strategy);
     event StrategyRemoved(address indexed strategy);
 
@@ -87,7 +86,7 @@ contract GovernanceV1 is UUPSUpgradeable, Initializable{
     error ProposalDefeated();
     error ProposalActive();
 
-    modifier onlyOwner {
+    modifier onlyOwner() {
         require(msg.sender == owner, "onlyOnwer");
         _;
     }

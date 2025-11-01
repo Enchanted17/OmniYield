@@ -12,7 +12,6 @@ contract TestOmniYieldPortal is Test {
     GovernanceV1 Gov;
     GovernanceProxy govProxy;
 
-
     address user1 = makeAddr("user1");
     address user2 = makeAddr("user2");
     address user3 = makeAddr("user3");
@@ -34,7 +33,7 @@ contract TestOmniYieldPortal is Test {
         uint256 action1 = 3;
 
         OYP.createProposal(newImpl, describe, action1);
-        
+
         vm.warp(block.timestamp + 1 days);
         OYP.voteProposal(1, true);
 

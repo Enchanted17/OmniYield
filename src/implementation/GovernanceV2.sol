@@ -15,8 +15,8 @@ contract GovernanceV2 is UUPSUpgradeable, Initializable {
     function myNumber() public pure returns (uint256) {
         return 1; // A function to test the implementation
     }
-    
+
     function _authorizeUpgrade(address _newImplementation) internal override {}
-    
+
     fallback() external payable {}
 }
