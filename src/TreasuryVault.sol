@@ -13,7 +13,7 @@ interface IGov {
 }
 
 interface IOYP {
-    function getGovAddress() external view returns (address);
+    function getGovProxyAddress() external view returns (address);
 }
 
 contract TreasuryVault is Ownable {
@@ -73,7 +73,7 @@ contract TreasuryVault is Ownable {
     function callTransfer(address to, uint256 amount) external {
         require(address(this).balance >= amount, "Insufficient contract balance");
 
-        address gov = IOYP(owner()).getGovAddress();
+        address gov = IOYP(owner()).getGovProxyAddress();
         bool isApprovedStrategy = IGov(gov).checkIsStrategy(msg.sender);
 
         require(isApprovedStrategy, "Caller is not an approved strategy");
@@ -88,7 +88,7 @@ contract TreasuryVault is Ownable {
      * @param amount Profit amount to be recorded
      */
     function profitIn(uint256 amount) external {
-        address gov = IOYP(owner()).getGovAddress();
+        address gov = IOYP(owner()).getGovProxyAddress();
         bool isApprovedStrategy = IGov(gov).checkIsStrategy(msg.sender);
 
         require(isApprovedStrategy, "Caller is not an approved strategy");

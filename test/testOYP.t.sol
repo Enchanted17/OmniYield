@@ -2,7 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {OmniYieldPortal} from "../src/OmniYieldPortal.sol";
-import {Governance} from "../src/Governance.sol";
+import {GovernanceV1} from "../src/implementation/GovernanceV1.sol";
+import {GovernanceProxy} from "../src/GovernanceProxy.sol";
 import {GovernanceToken} from "../src/GovernanceToken.sol";
 import {TreasuryVault} from "../src/TreasuryVault.sol";
 import {LPToken} from "../src/LPToken.sol";
@@ -11,22 +12,25 @@ import {Test, console2} from "forge-std/Test.sol";
 
 contract TestOmniYieldPortal is Test {
     OmniYieldPortal OYP;
-    Governance Gov;
+    GovernanceV1 Gov;
     TreasuryVault TV;
     GovernanceToken GT;
     LPToken LP;
     FlashLoan FL;
+    GovernanceProxy govProxy;
+
 
     address user1 = makeAddr("user1");
     address user2 = makeAddr("user2");
     address user3 = makeAddr("user3");
 
     function setUp() public {
-        OYP = new OmniYieldPortal();
+        address impl = address(new GovernanceV1());
+        OYP = new OmniYieldPortal(impl);
         GT = GovernanceToken(OYP.getGTAddress());
         TV = TreasuryVault(payable(OYP.getTVAddress()));
         LP = LPToken(OYP.getLPAddress());
-        Gov = Governance(OYP.getGovAddress());
+        Gov = GovernanceV1(OYP.getGovProxyAddress());
     }
 
     function testDeposit() public {

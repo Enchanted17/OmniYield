@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Governance} from "./Governance.sol";
+import {GovernanceV1} from "./implementation/GovernanceV1.sol";
+import {GovernanceProxy} from "./GovernanceProxy.sol";
 import {GovernanceToken} from "./GovernanceToken.sol";
 import {TreasuryVault} from "./TreasuryVault.sol";
 import {LPToken} from "./LPToken.sol";
@@ -17,7 +18,8 @@ contract OmniYieldPortal {
     GovernanceToken public gt;
     TreasuryVault public tv;
     LPToken public lp;
-    Governance public gov;
+    GovernanceV1 public gov;
+    GovernanceProxy public govProxy;
 
     // LP pricing and system parameters
     uint256 public valuePerLP = 1; // Initial LP value (1 wei per LP)
@@ -73,11 +75,13 @@ contract OmniYieldPortal {
 
     // ========== CONSTRUCTOR ==========
 
-    constructor() {
+    constructor(address impl) {
+        bytes memory data = abi.encodeWithSignature("initialize()");
         gt = new GovernanceToken();
         tv = new TreasuryVault();
         lp = new LPToken();
-        gov = new Governance();
+        govProxy = new GovernanceProxy(impl, data);
+        gov = GovernanceV1(address(govProxy));
     }
 
     // ========== EXTERNAL FUNCTIONS ==========
@@ -321,7 +325,7 @@ contract OmniYieldPortal {
     /**
      * @dev Get Governance contract address
      */
-    function getGovAddress() external view returns (address) {
+    function getGovProxyAddress() external view returns (address) {
         return address(gov);
     }
 

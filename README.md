@@ -4,7 +4,7 @@
 <a id="Chinese"></a>
 # OmniYield Protocol
 
-**OmniYield** 是一个去中心化的收益聚合与治理协议，允许用户存入 ETH 获取流动性凭证（LP Token），并通过持有 LP 获得治理代币（GT），参与协议策略的投票决策。资金由 `TreasuryVault` 管理，仅向治理通过的策略合约分配，实现安全、透明、社区驱动的资金运作。
+OmniYield 是一个去中心化的收益聚合与治理协议，用户存入 ETH 即可获得流动性凭证（LP Token），并基于 LP 持有量分层获得治理代币（GT），从而参与协议策略的社区决策。所有资金由 TreasuryVault 安全托管，仅授权给 治理通过的策略合约 使用，确保资金透明可控。治理模块采用 UUPS 代理模式 实现，支持 无停机热升级。未来可通过社区提案安全扩展投票机制、提案类型、权限模型等，兼具 灵活性 与 安全性，为长期演进提供坚实基础。
 
 ---
 
@@ -17,19 +17,23 @@
 | **分层治理代币奖励** | LP 持有量越高，获得的 GT 越多（三档递增） |
 | **策略白名单治理** | 社区提案 + 投票决定哪些策略可调用金库资金 |
 | **安全金库设计** | 仅治理批准的策略可提取资金，防止恶意合约 |
+| **UUPS 可升级治理** | 治理逻辑通过 UUPS 代理模式实现 |
 
 ---
 
 ## 合约架构
 
 ```text
-OmniYieldPortal.sol       ← 用户入口（存款、取款、治理）
-├── GovernanceToken.sol   ← GT 代币（时间加权投票）
-├── LPToken.sol           ← LP 代币（流动性份额）
-├── TreasuryVault.sol     ← 资金金库（存取款 + 策略调用）
-└── Governance.sol        ← 治理模块（提案、投票、执行）
+OmniYieldPortal.sol             ← 用户入口（存款、取款、治理）
+├── GovernanceToken.sol         ← GT 代币（时间加权投票）
+├── LPToken.sol                 ← LP 代币（流动性份额）
+├── TreasuryVault.sol           ← 资金金库（存取款 + 策略调用）
+├── GovernanceProxy.sol         ← 治理模块代理合约
+├── implementation              ← 治理模块（提案、投票、执行）
+|       ├── GovernanceV1.sol    ← V1 版本 （逻辑完整）
+|       └── GovernanceV2.sol    ← V2 版本 （简单逻辑，仅作测试用例）
 └── strategys
-        └── FlashLoan.sol ← 策略样例
+        └── FlashLoan.sol       ← 策略样例
 ```
 
 ## 合约详解
@@ -57,11 +61,13 @@ OmniYieldPortal.sol       ← 用户入口（存款、取款、治理）
 
     - 提供 `totalAssets` 供 LP 定价。
 
-5. `Governance.sol` – **治理中心**
+5. `Governance.sol + GovProxy.sol` – UUPS 可升级治理中心
+    - 采用 UUPS 代理模式，支持 无停机热升级
     - 提案生命周期：Active → Succeeded/Defeated → Executed
-    - 支持 添加 / 删除策略
+    - 支持 添加 / 删除 / 升级 策略
     - 投票周期：3 天（自定义）
     - 投票权重来自 `GovernanceToken.getVotingWeight()`
+    - 升级权限由 onlyOwner 控制，未来可通过提案变更
 
 ## 治理代币（GT）分配规则
 | LP 持有量      | 每单位 LP 获得的 GT    |
@@ -82,7 +88,7 @@ if (block.timestamp - mintTime >= 1 day) {
 ```
 - 每天线性解锁投票权
 - 防止短期投机操纵
-- n鼓励长期持有
+- 鼓励长期持有
 
 ## 安全机制
 |风险             | 防护措施                                  |
@@ -95,21 +101,16 @@ if (block.timestamp - mintTime >= 1 day) {
 
 ## 部署流程
 ```bash
-# 1. 编译
 forge build
 
-# 2. 部署主合约（自动部署所有子合约）
-forge create OmniYieldPortal --rpc-url $RPC --private-key $KEY
-
-# 3. 转移 Ownership（可选）
-cast send <Portal> "transferOwnership(address)" $MULTISIG
+forge script scripts/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
 ```
 - 部署后地址：
     - OmniYieldPortal: 主入口
     - GovernanceToken: GT
     - LPToken: LP
     - TreasuryVault: 金库
-    - Governance: 治理
+    - GovernanceProxy: 治理代理
 
 ## 用户操作指南
 **存款**
@@ -160,7 +161,7 @@ await portal.voteProposal(proposalId, false); // 反对
 <a id="English"></a>
 # OmniYield Protocol()
 
-**OmniYield** is a decentralized yield aggregation and governance protocol that allows users to deposit ETH to receive liquidity certificates (LP Tokens). By holding LPs, users earn governance tokens (GT) that enable them to participate in strategic decision-making through on-chain voting. Funds are managed by the `TreasuryVault`, which allocates assets only to governance-approved strategy contracts — ensuring **security**, **transparency**, and **community-driven** fund operations.
+**OmniYield** is a decentralized yield aggregation and governance protocol that allows users to deposit ETH to receive liquidity certificates (LP Tokens). By holding LPs, users earn governance tokens (GT) that enable them to participate in strategic decision-making through on-chain voting. Funds are managed by the `TreasuryVault`, which allocates assets only to governance-approved strategy contracts — ensuring **security**, **transparency**, and **community-driven** fund operations.The governance module is built with UUPS proxy pattern, enabling zero-downtime hot upgrades. Future enhancements—such as new proposal types, voting mechanisms, or access controls—can be deployed via on-chain governance, ensuring both flexibility and security for long-term evolution.
 
 ---
 
@@ -173,19 +174,22 @@ await portal.voteProposal(proposalId, false); // 反对
 | **Tiered GT Rewards** | The more LPs held, the more GTs earned (three-tier reward system) |
 | **Whitelisted Strategy Governance** | Community proposals and votes determine which strategies can access the vault |
 | **Secure Vault Design** | Only governance-approved strategies can withdraw funds, preventing malicious behavior |
-
+| **UUPS Upgradeable Governance** | Governance logic implemented via UUPS proxy pattern |
 ---
 
 ## Contract Architecture
 
 ```txt
-OmniYieldPortal.sol       ← User entry point (deposit, withdraw, governance)
-├── GovernanceToken.sol   ← GT token (time-weighted voting)
-├── LPToken.sol           ← LP token (liquidity share)
-├── TreasuryVault.sol     ← Vault (storage + strategy management)
-└── Governance.sol        ← Governance module (proposal, voting, execution)
+OmniYieldPortal.sol             ← User portal (deposit, withdraw, governance)
+├── GovernanceToken.sol         ← GT token (time-weighted voting)
+├── LPToken.sol                 ← LP token (liquidity share)
+├── TreasuryVault.sol           ← Treasury vault (deposit/withdraw + strategy calls)
+├── GovernanceProxy.sol         ← Governance module proxy contract
+├── implementation              ← Governance module (proposals, voting, execution)
+│       ├── GovernanceV1.sol    ← V1 version (full logic)
+│       └── GovernanceV2.sol    ← V2 version (minimal logic, for testing only)
 └── strategys
-        └── FlashLoan.sol ← Example strategy
+        └── FlashLoan.sol       ← Strategy example
 ```
 
 ---
@@ -216,11 +220,13 @@ OmniYieldPortal.sol       ← User entry point (deposit, withdraw, governance)
      - `profitIn(amount)` – Report profits to vault  
    - Provides `totalAssets` for LP valuation.
 
-5. **`Governance.sol` – Governance Center**
-   - Proposal lifecycle: Active → Succeeded/Defeated → Executed  
-   - Supports adding/removing strategies.  
-   - Default voting period: 3 days (customizable).  
-   - Voting weights sourced from `GovernanceToken.getVotingWeight()`.
+5. `Governance.sol + GovProxy.sol` – **UUPS Upgradeable Governance Core**
+    - Built with UUPS proxy pattern, enabling zero-downtime hot upgrades
+    - Proposal lifecycle: `Active → Succeeded/Defeated → Executed`
+    - Supports adding / removing / upgrading strategies
+    - Voting period: 3 days (configurable)
+    - Voting power sourced from `GovernanceToken.getVotingWeight()`
+    - Upgrade authorization controlled by `onlyOwner`; can be transitioned via future governance proposals
 
 ---
 
@@ -267,14 +273,9 @@ if (block.timestamp - mintTime >= 1 day) {
 ## Deployment Process
 
 ```bash
-# 1. Build
 forge build
 
-# 2. Deploy main contract (auto-deploys all subcontracts)
-forge create OmniYieldPortal --rpc-url $RPC --private-key $KEY
-
-# 3. Transfer Ownership (optional)
-cast send <Portal> "transferOwnership(address)" $MULTISIG
+forge script scripts/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
 ```
 
 Deployed contracts:
@@ -282,7 +283,7 @@ Deployed contracts:
 - GovernanceToken: GT
 - LPToken: LP
 - TreasuryVault: Vault
-- Governance: Governance module
+- GovernanceProxy: Governance Proxy
 
 ---
 

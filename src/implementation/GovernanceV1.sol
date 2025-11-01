@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
+import "@openzeppelin/contracts//proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 /**
  * @title Governance
  * @dev Handles proposal creation, voting, and execution for protocol governance
  * Manages strategy whitelisting and community decision making
  */
-contract Governance is Ownable {
+contract GovernanceV1 is UUPSUpgradeable, Initializable{
     // ========== STATE VARIABLES ==========
-
+    address owner;
     uint256 public proposalId;
     uint256 public constant VOTING_CYCLE = 3 days;
 
@@ -28,6 +28,7 @@ contract Governance is Ownable {
     enum Action {
         Add,
         Delete,
+        Upgrade,
         Other
     }
 
@@ -83,10 +84,17 @@ contract Governance is Ownable {
     error ProposalNotExecutable();
     error StrategyAlreadyExists();
     error StrategyDoesNotExist();
+    error ProposalDefeated();
+    error ProposalActive();
 
-    // ========== CONSTRUCTOR ==========
+    modifier onlyOwner {
+        require(msg.sender == owner, "onlyOnwer");
+        _;
+    }
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() public initializer {
+        owner = msg.sender;
+    }
 
     // ========== EXTERNAL FUNCTIONS ==========
 
@@ -144,13 +152,13 @@ contract Governance is Ownable {
         Proposal storage proposal = idToProposal[id];
 
         // Check if voting period is still active
-        if (block.timestamp > proposal.endTime) {
+        if (block.timestamp >= proposal.endTime) {
             _updateProposalState(id);
             return false;
         }
 
         if (hasUserVoted[voter][id]) {
-            revert AlreadyVoted();
+            return false;
         }
 
         // Record vote
@@ -174,8 +182,11 @@ contract Governance is Ownable {
     function executeProposal(uint256 id) external onlyOwner {
         Proposal storage proposal = idToProposal[id];
 
-        if (proposal.state != ProposalState.Succeeded) {
-            revert ProposalNotExecutable();
+        if (proposal.state == ProposalState.Defeated) {
+            revert ProposalDefeated();
+        }
+        if (proposal.state == ProposalState.Active) {
+            revert ProposalActive();
         }
         if (proposal.executed) {
             revert ProposalNotExecutable();
@@ -193,6 +204,9 @@ contract Governance is Ownable {
             success = true;
         } else if (proposal.action == Action.Delete) {
             _removeStrategy(proposal.strategy);
+            success = true;
+        } else if (proposal.action == Action.Upgrade) {
+            _upgradeGovernance(proposal.strategy);
             success = true;
         }
 
@@ -274,6 +288,8 @@ contract Governance is Ownable {
         return hasUserVoted[voter][id];
     }
 
+    function _authorizeUpgrade(address _newImplementation) internal override {}
+
     // ========== INTERNAL FUNCTIONS ==========
 
     /**
@@ -315,6 +331,10 @@ contract Governance is Ownable {
         emit StrategyRemoved(strategy);
     }
 
+    function _upgradeGovernance(address newImplementation) internal {
+        upgradeToAndCall(newImplementation, abi.encodeWithSignature("initialize(address)", owner));
+    }
+
     /**
      * @dev Update proposal state based on current conditions
      * @param id Proposal ID to update
@@ -322,7 +342,7 @@ contract Governance is Ownable {
     function _updateProposalState(uint256 id) internal {
         Proposal storage proposal = idToProposal[id];
 
-        if (proposal.state == ProposalState.Active && block.timestamp > proposal.endTime) {
+        if (proposal.state == ProposalState.Active && block.timestamp >= proposal.endTime) {
             ProposalState oldState = proposal.state;
             ProposalState newState =
                 proposal.forVotes > proposal.againstVotes ? ProposalState.Succeeded : ProposalState.Defeated;
@@ -341,6 +361,7 @@ contract Governance is Ownable {
     function _parseActionType(uint256 actionType) internal pure returns (Action) {
         if (actionType == 1) return Action.Add;
         if (actionType == 2) return Action.Delete;
+        if (actionType == 3) return Action.Upgrade;
         return Action.Other;
     }
 
@@ -352,6 +373,7 @@ contract Governance is Ownable {
     function _actionToString(Action action) internal pure returns (string memory) {
         if (action == Action.Add) return "Add";
         if (action == Action.Delete) return "Delete";
+        if (action == Action.Upgrade) return "Upgrade";
         if (action == Action.Other) return "Other";
         return "Unknown";
     }

@@ -9,7 +9,7 @@ contract DeployOmniYield is Script {
     GovernanceToken public gt;
     LPToken public lp;
     TreasuryVault public tv;
-    Governance public gov;
+    GovernanceProxy public govProxy;
 
     function run() external {
         // Load private key from environment
@@ -20,15 +20,17 @@ contract DeployOmniYield is Script {
         console.log("Deployer:", deployer);
 
         vm.startBroadcast(deployerPrivateKey);
+        // deploy the Impl
+        address impl = address(new GovernanceV1());
 
         // Deploy the main portal (deploys all sub-contracts)
-        portal = new OmniYieldPortal();
+        portal = new OmniYieldPortal(impl);
 
         // Fetch deployed instances
         gt = portal.gt();
         lp = portal.lp();
         tv = portal.tv();
-        gov = portal.gov();
+        govProxy = portal.govProxy();
 
         vm.stopBroadcast();
 
@@ -40,7 +42,8 @@ contract DeployOmniYield is Script {
         console.log("GovernanceToken:  ", address(gt));
         console.log("LPToken:          ", address(lp));
         console.log("TreasuryVault:    ", address(tv));
-        console.log("Governance:       ", address(gov));
+        console.log("GovernanceV1:     ", address(impl));
+        console.log("GovernanceProxy   ", address(govProxy));
         console.log("-----------------------------------");
         console.log("");
         console.log("Next steps:");
