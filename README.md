@@ -24,14 +24,15 @@ OmniYield 是一个去中心化的收益聚合与治理协议，用户存入 ETH
 ## 合约架构
 
 ```text
-OmniYieldPortal.sol             ← 用户入口（存款、取款、治理）
+src
+├── OmniYieldPortal.sol         ← 用户入口（存款、取款、治理）
 ├── GovernanceToken.sol         ← GT 代币（时间加权投票）
 ├── LPToken.sol                 ← LP 代币（流动性份额）
 ├── TreasuryVault.sol           ← 资金金库（存取款 + 策略调用）
 ├── GovernanceProxy.sol         ← 治理模块代理合约
 ├── implementation              ← 治理模块（提案、投票、执行）
-|       ├── GovernanceV1.sol    ← V1 版本 （逻辑完整）
-|       └── GovernanceV2.sol    ← V2 版本 （简单逻辑，仅作测试用例）
+│       ├── GovernanceV1.sol    ← V1 版本 （逻辑完整）
+│       └── GovernanceV2.sol    ← V2 版本 （简单逻辑，仅作测试用例）
 └── strategys
         └── FlashLoan.sol       ← 策略样例
 ```
@@ -61,7 +62,7 @@ OmniYieldPortal.sol             ← 用户入口（存款、取款、治理）
 
     - 提供 `totalAssets` 供 LP 定价。
 
-5. `Governance.sol + GovProxy.sol` – UUPS 可升级治理中心
+5. `Governance.sol + GovProxy.sol` – **UUPS 可升级治理中心**
     - 采用 UUPS 代理模式，支持 无停机热升级
     - 提案生命周期：Active → Succeeded/Defeated → Executed
     - 支持 添加 / 删除 / 升级 策略
@@ -180,7 +181,8 @@ await portal.voteProposal(proposalId, false); // 反对
 ## Contract Architecture
 
 ```txt
-OmniYieldPortal.sol             ← User portal (deposit, withdraw, governance)
+src
+├── OmniYieldPortal.sol         ← User portal (deposit, withdraw, governance)
 ├── GovernanceToken.sol         ← GT token (time-weighted voting)
 ├── LPToken.sol                 ← LP token (liquidity share)
 ├── TreasuryVault.sol           ← Treasury vault (deposit/withdraw + strategy calls)
