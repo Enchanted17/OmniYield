@@ -58,7 +58,7 @@ contract FlashLoan {
         // 5. 如果有净利润，通过profitIn函数报告利润
         if (netProfit > 0) {
             // 调用TV的profitIn函数来记录利润
-            (bool profitSuccess,) = treasury.call(abi.encodeWithSignature("profitIn(uint256)", netProfit));
+            (bool profitSuccess,) = treasury.call{value:netProfit}(abi.encodeWithSignature("profitIn(uint256)", netProfit));
             require(profitSuccess, "Profit reporting failed");
             totalProfit += netProfit;
 
@@ -95,7 +95,7 @@ contract FlashLoan {
         uint256 remainingBalance = address(this).balance;
         if (remainingBalance > 0) {
             // 如果有剩余资金，都当作利润报告给TV
-            (bool success,) = treasury.call(abi.encodeWithSignature("profitIn(uint256)", remainingBalance));
+            (bool success,) = treasury.call{value:remainingBalance}(abi.encodeWithSignature("profitIn(uint256)", remainingBalance));
             if (success) {
                 totalProfit += remainingBalance;
             }

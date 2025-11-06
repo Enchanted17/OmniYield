@@ -317,4 +317,8 @@ contract TestOmniYieldPortal is Test {
         (bool profitSuccess,) = address(TV).call(abi.encodeWithSignature("profitIn(uint256)", 300 ether));
         assertEq(TV.totalAssets(), 600 ether);
     }
+
+    function testCheckOwner()public {
+        assertEq(address(OYP), Gov.owner());
+    }
 }

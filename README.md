@@ -34,7 +34,8 @@ src
 │       ├── GovernanceV1.sol    ← V1 版本 （逻辑完整）
 │       └── GovernanceV2.sol    ← V2 版本 （简单逻辑，仅作测试用例）
 └── strategys
-        └── FlashLoan.sol       ← 策略样例
+        ├── FlashLoan.sol       ← 策略样例
+        └── KittyRaffle.sol     ← 策略样例
 ```
 
 ## 合约详解
@@ -191,7 +192,8 @@ src
 │       ├── GovernanceV1.sol    ← V1 version (full logic)
 │       └── GovernanceV2.sol    ← V2 version (minimal logic, for testing only)
 └── strategys
-        └── FlashLoan.sol       ← Strategy example
+        ├── FlashLoan.sol       ← Strategy example
+        └── KittyRaffle.sol     ← Strategy example
 ```
 
 ---

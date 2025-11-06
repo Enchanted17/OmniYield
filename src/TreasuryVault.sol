@@ -87,7 +87,7 @@ contract TreasuryVault is Ownable {
      * @dev Record profit from strategy operations
      * @param amount Profit amount to be recorded
      */
-    function profitIn(uint256 amount) external {
+    function profitIn(uint256 amount) external payable {
         address gov = IOYP(owner()).getGovProxyAddress();
         bool isApprovedStrategy = IGov(gov).checkIsStrategy(msg.sender);
 

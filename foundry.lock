@@ -1,4 +1,7 @@
 {
+  "lib/api3-contracts": {
+    "rev": "a63999db7bdbfebe4939ad651d62b62430de8029"
+  },
   "lib/openzeppelin-contracts": {
     "tag": {
       "name": "v5.5.0",

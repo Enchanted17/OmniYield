@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract GovernanceV1 is UUPSUpgradeable, Initializable {
     // ========== STATE VARIABLES ==========
-    address owner;
+    address public owner;
     uint256 public proposalId;
     uint256 public constant VOTING_CYCLE = 3 days;
 
