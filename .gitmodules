@@ -3,3 +3,4 @@
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib/api3-contracts"]
 	path = lib/api3-contracts
+    url = https://github.com/api3dao/api3-contracts.git
