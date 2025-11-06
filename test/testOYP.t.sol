@@ -318,7 +318,7 @@ contract TestOmniYieldPortal is Test {
         assertEq(TV.totalAssets(), 600 ether);
     }
 
-    function testCheckOwner()public {
+    function testCheckOwner() public {
         assertEq(address(OYP), Gov.owner());
     }
 }
